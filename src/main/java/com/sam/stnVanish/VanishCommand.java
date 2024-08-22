@@ -7,6 +7,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -27,28 +29,44 @@ public class VanishCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            if(!player.isOp()) {
-                player.sendMessage(ChatColor.RED + "You do not have permission to use this command");
-                return true;
-            }
 
             if (vanishedPlayers.contains(player.getUniqueId())) {
-                vanishedPlayers.remove(player.getUniqueId());
-                for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
-                    onlinePlayer.showPlayer(plugin, player);
-                }
-                stopVanishMessage(player);
+                unvanishPlayer(player);
             } else {
-                vanishedPlayers.add(player.getUniqueId());
-                for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
-                    if (!onlinePlayer.isOp()) {
-                        onlinePlayer.hidePlayer(plugin, player);
-                    }
-                }
-                startVanishMessage(player);
+                vanishPlayer(player);
             }
         }
         return true;
+    }
+
+    private void vanishPlayer(Player player) {
+        vanishedPlayers.add(player.getUniqueId());
+        for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
+            if (!onlinePlayer.isOp()) {
+                onlinePlayer.hidePlayer(plugin, player);
+            }
+        }
+        startVanishMessage(player);
+        applyNightVision(player);
+        player.sendMessage(ChatColor.GREEN + "You are now vanished.");
+    }
+
+    private void unvanishPlayer(Player player) {
+        vanishedPlayers.remove(player.getUniqueId());
+        for (Player onlinePlayer : player.getServer().getOnlinePlayers()) {
+            onlinePlayer.showPlayer(plugin, player);
+        }
+        stopVanishMessage(player);
+        removeNightVision(player);
+        player.sendMessage(ChatColor.RED + "You are no longer vanished.");
+    }
+
+    private void applyNightVision(Player player) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, false, false));
+    }
+
+    private void removeNightVision(Player player) {
+        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
     }
 
     public void startVanishMessage(Player player) {
@@ -59,7 +77,7 @@ public class VanishCommand implements CommandExecutor {
                     this.cancel();
                     return;
                 }
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§aYou are currently vanished"));
+                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GREEN + "You are currently vanished."));
             }
         }.runTaskTimer(plugin, 0L, 20L);
     }
