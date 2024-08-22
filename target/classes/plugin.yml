@@ -1,0 +1,8 @@
+name: STN-Vanish
+version: '1.0.0'
+main: com.sam.stnVanish.Main
+api-version: '1.20'
+authors: [ SamTheNoob69 ]
+description: Simple Vanish plugin.
+commands:
+  vanish:
